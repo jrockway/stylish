@@ -2,11 +2,15 @@ package Server::Stylish;
 use MooseX::POE;
 use Moose::Util::TypeConstraints;
 use Scalar::Util qw(refaddr);
-use POE qw(Component::Server::TCP);
+use IO::Socket::INET;
+use POE qw(Wheel::ListenAccept Wheel::ReadWrite);
+use MooseX::AttributeHelpers;
 
 our $VERSION = '0.01';
 
-with qw/MooseX::LogDispatch::Levels/;
+with qw/MooseX::LogDispatch::Levels
+        Server::Stylish::Command::Id
+       /;
 
 has 'formatter' => (
     is        => 'ro',
@@ -25,106 +29,117 @@ has 'port' => (
     default => '36227',
 );
 
-has '_server_id' => (
-    isa        => 'Int',
-    is         => 'ro',
-    accessor   => 'server',
-    lazy_build => 1,
+has 'server_socket' => (
+    is      => 'ro',
+    isa     => 'IO::Socket',
+    lazy    => 1,
+    default => sub {
+        my $self = shift;
+        return IO::Socket::INET->new( 
+            LocalPort => $self->port,
+            Listen => 10,
+            Reuse  => "yes",
+        ) or die "can't make server socket: $@\n";
+    },
 );
 
-sub _mk_handler_dispatcher {
-    my $self = shift;
-    my $name = shift;
+has 'server' => (
+    is  => 'rw',
+    isa => 'POE::Wheel::ListenAccept',
+);
 
-    (my $fname = $name) =~ s/([a-z])([A-Z])/$1_$2/;
-    $fname = lc $fname;
-    
-    return ($name => sub { return $self->$fname(@_) });
-}
+has 'clients' => (
+    metaclass => 'Collection::Hash',
+    is        => 'rw',
+    isa       => 'HashRef[POE::Wheel::ReadWrite]',
+    default   => sub { {} },
+    provides  => {
+        delete => 'delete_client',
+        get    => 'get_client',
+        set    => 'add_client',
+    },
+);
 
-sub _build__server_id {
-    my $self = shift;
-    POE::Component::Server::TCP->new(
-        Port => $self->port,
-        map { $self->_mk_handler_dispatcher($_) }
-          qw/ClientInput ClientConnected ClientDisconnected ClientError/,
+around add_client => sub {
+    my ($next, $self, $wheel) = @_;
+    $self->$next($wheel->ID, $wheel);
+    return $wheel->ID;
+};
+
+sub START {
+    my $self = $_[OBJECT];
+    $self->info('Starting Stylish server on port', $self->port);
+
+    $self->server(
+        POE::Wheel::ListenAccept->new(
+            Handle => $self->server_socket,
+            AcceptEvent => "server_accepted",
+            #ErrorEvent  => "server_error",
+        ),
     );
 }
 
-before client_connected => sub {
-    shift->debug('Client connected');
-};
+event server_accepted => sub {
+    my $self = $_[OBJECT];
+    my $client_socket = $_[ARG0];
 
-before client_disconnected => sub {
-    shift->debug('Client disconnected');
-};
+    my $wheel = POE::Wheel::ReadWrite->new(
+        Handle     => $client_socket,
+        InputEvent => "client_input",
+        ErrorEvent => "client_error",
+    );
 
-before client_input => sub {
-    my $self = shift;
-    $self->debug('Client input:', $_[ARG0]);
+    my $id = $self->add_client($wheel);
+    $self->debug('Created new client with ID', $id);
+
+    $self->output( $id, 
+                   ['welcome', 
+                    [ # information alist
+                        [':version', 'Stylish', $VERSION],
+                        [':session-id', $id],
+                    ]]);
 };
 
 sub output {
-    my $self = shift;
-    my $msg  = shift;
-    my $heap = $_[HEAP];
-    $heap->{client}->put($self->formatter->format($msg));
-}
-
-sub client_connected {
-    my $self = shift;
-    my $heap = $_[HEAP];
+    my ($self, $client, $msg) = @_;
+    my $res = $self->formatter->format($msg);
     
-    $self->output(['welcome', 
-                   ':version', ['Stylish', $VERSION],
-                   ':session-id', refaddr $_[SESSION]],
-                  @_);
-}
+    $self->debug('Response:', $res);
+    $self->get_client($client)->put($res);
 
-sub client_disconnected {
-    my ($self, @POE) = @_;
-}
+};
 
-sub client_input {
-    my $self = shift;
-    my ($input, $heap, $session) = @_[ARG0, HEAP, SESSION];
-
-    eval {
-        my $parsed = $self->formatter->parse($input);
+event 'client_input' => sub {
+    my ($self, $input, $client)  = @_[OBJECT, ARG0, ARG1];
+    
+    my $result = eval {
+        my @parsed = map { eval { $_->stringify } || $_ } 
+          @{scalar $self->formatter->parse($input)};
+        
+        my $command  = shift @parsed;
+        $self->debug("Calling '$command' with args", join ':', @parsed);
+        my $method = "command_$command";
+        my $r = $self->$method($client, @parsed);
+        $self->debug("Got result from '$command': ", $r);
+        return $r;
     };
-
-    $heap->{client}->put("it worked, $session");
-}
-
-
-sub client_error {
-    my ($self, @POE) = @_;
-    $self->error('Client error:');
-}
-
-sub START {
-    my $self = shift;
-    $self->info('Starting Stylish server on port', $self->port);
-
-    $poe_kernel->post( $self->server => register => 'all' );    
-}
-
-# We registered for all events, this will produce some debug info.
-sub DEFAULT {
-    my ( $self, $event, $args ) = @_[ OBJECT, ARG0 .. $#_ ];
-    my @output = ("$event: ");
-
-    foreach my $arg (@$args) {
-        if ( ref($arg) eq ' ARRAY ' ) {
-            push( @output, "[" . join( " ,", @$arg ) . "]" );
-        }
-        else {
-            push( @output, "'$arg' " );
-        }
+    
+    if(!$result){
+        my $error = quotemeta $@;
+        $error =~ s/[\\][ ]/ /g;
+        $self->output($client, [ error => parse_error => qq{"$error"} ]);
     }
-    $self->debug( join ' ', @output );
-    return 0;
-}
+    else {
+        $result = [$result] if ref $result ne 'ARRAY';
+        $self->output($client, $result);
+    }
+};
+
+event 'client_error' => sub {
+    my $self = $_[OBJECT];
+    $self->error('Client error, deleting client ID', $_[ARG3]);
+    $self->delete_client($_[ARG3]);
+};
 
 sub run { POE::Kernel->run }
 
