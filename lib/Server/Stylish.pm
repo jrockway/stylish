@@ -10,6 +10,7 @@ our $VERSION = '0.01';
 
 with qw/MooseX::LogDispatch::Levels
         Server::Stylish::Command::Id
+        Server::Stylish::Command::Syntax
        /;
 
 has 'formatter' => (
