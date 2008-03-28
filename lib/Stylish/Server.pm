@@ -11,6 +11,7 @@ our $VERSION = '0.01';
 with qw/MooseX::LogDispatch::Levels
         Stylish::Command::Id
         Stylish::Command::Syntax
+        Stylish::Command::REPL
        /;
 
 has 'formatter' => (
