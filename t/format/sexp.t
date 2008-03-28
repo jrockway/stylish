@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 2;
+use Test::More tests => 3;
 
 use Stylish::Format::Sexp;
 
@@ -15,3 +15,4 @@ my $data = [
 ];
 
 is $format->format($data), q{(((1 2) foo) ((2 3) bar))};
+is $format->format(\"hello world"), q{"hello world"};
