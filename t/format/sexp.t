@@ -15,4 +15,5 @@ my $data = [
 ];
 
 is $format->format($data), q{(((1 2) foo) ((2 3) bar))};
-is $format->format(\"hello world"), q{"hello world"};
+is $format->format(\"hello world
+"), q{"hello world\\n"};

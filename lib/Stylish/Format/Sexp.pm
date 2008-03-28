@@ -25,6 +25,7 @@ sub format {
     if(ref $item eq 'SCALAR'){
         $item = quotemeta $$item;
         $item =~ s/[\\]\040/\040/g;
+        $item =~ s/[\\]?\n/\\n/g;
         return qq{"$item"};
     }
 
