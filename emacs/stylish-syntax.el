@@ -13,6 +13,7 @@ results to come back.")
 (defun stylish-syntaxify (start end &optional buffer)
   "Send BUFFER's text between START and END to Stylish for fontification."
   (when (not buffer) (setq buffer (current-buffer)))
+  (remove-text-properties start end '(face nil) buffer)
   (let ((text (buffer-substring-no-properties start end))
         (tag (random)))
     (while (string-match "\n" text)
@@ -25,19 +26,31 @@ results to come back.")
   (let* ((tag    (cadr (assoc 'tag result)))
          (data   (cadr (assoc 'result result)))
          (buffer (cdr (assoc tag stylish-pending-highlight-requests))))
-    (delq (cons tag buffer) stylish-pending-highlight-requests)
+    ;(delq (cons tag buffer) stylish-pending-highlight-requests)
+    (setq stylish-pending-highlight-requests nil)
     (with-current-buffer buffer
       (loop for rule in data
             do (let* ((start  (caar rule))
                       (end    (cadar rule))
                       (syntax (cadr rule))
                       (face   (or (cdr (assoc syntax stylish-faces))
-                                  font-lock-warning-face))
-                      (text   
-                       (propertize (buffer-substring start end)
-                                   'face face)))
-                 (save-excursion
-                   (message "new text %s" text)
-                   (goto-char start)
-                   (delete-region start end)
-                   (insert text)))))))
+                                  font-lock-warning-face)))
+                 (add-text-properties start end (list 'face face) buffer))))))
+
+(defvar last-syntax 0)
+(defun stylish-do-current-line nil
+  (interactive)
+  (make-local-variable 'last-syntax)
+  (when (> (- (cadr (current-time)) last-syntax) 1)
+    (setq last-syntax (cadr (current-time)))
+    (stylish-syntaxify (save-excursion (beginning-of-line) (point))
+                       (save-excursion (end-of-line) (point))
+                       (current-buffer))))
+  (incf foo))
+
+(defun turn-on-stylish-syntax nil
+  "Turn on stylish syntaxifier"
+  (interactive)
+  (add-hook 'post-command-hook 'stylish-do-current-line nil t))
+
+  

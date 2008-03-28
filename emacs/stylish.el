@@ -13,7 +13,6 @@
   "Map frommessage type to handler function")
 (setq stylish-dispatch-alist 
       '((welcome . stylish-handler-welcome)
-        (highlight . stylish-handler-highlight)
         (error . stylish-handler-error)))
 
 (defun stylish-connected-p nil
@@ -43,11 +42,15 @@ should run this before sending data to the Stylish server."
          (type (car message))
          (args (cdr message))
          (handler (assoc type stylish-dispatch-alist)))
-    (message "Handling %s via %s" message (prin1-to-string (cdr handler)))
+    ;(message "Handling %s via %s" message (prin1-to-string (cdr handler)))
     (condition-case error
         (if handler (apply (cdr handler) args)
           (error "No handler for message type %s" type))
       (error (message "Error in stylish filter %s: %s" (car error) (cdr error))))))
+
+(defun stylish-register-handler (action handler)
+
+        (highlight . stylish-handler-highlight)
 
 (defun stylish-handler-welcome (information)
   "Show welcome message after connecting to Stylish server"
@@ -58,7 +61,8 @@ should run this before sending data to the Stylish server."
 
 (defun stylish-handler-error (type message)
   "Handle an error returned by the Stylish server"
-  (message "Error from Stylish (%s): %s" type message))
+  ;(message "Error from Stylish (%s): %s" type message))
+  )
 
 (defun stylish-send-command (command &rest args)
   "Send a COMMAND with ARGS to the Stylish server.  The result is returned
@@ -67,6 +71,7 @@ asynchronously.  See [stylish-filter] and [stylish-dispatch-alist]."
   (let ((message (prin1-to-string (cons command args))))
     (process-send-string "stylish" (format "%s\n" message))))
 
+(provide 'stylish)
                
 ;(stylish)
 ;(stylish-send-command 'foo 1 2 3)
