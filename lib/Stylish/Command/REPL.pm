@@ -38,4 +38,11 @@ sub command_repl {
     return ['repl', ":$status", \$result];
 }
 
+sub command_repl_load_file {
+    my ($self, $client, $file) = @_;
+    $file =~ s/[\\]/\\/g;
+    $file =~ s/[']/\'/g;
+    return $self->command_repl($client, "do '$file'");
+}
+
 1;
