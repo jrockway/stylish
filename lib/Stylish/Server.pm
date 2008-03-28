@@ -126,9 +126,7 @@ event 'client_input' => sub {
     };
     
     if(!$result){
-        my $error = quotemeta $@;
-        $error =~ s/[\\][ ]/ /g;
-        $self->output($client, [ error => parse_error => qq{"$error"} ]);
+        $self->output($client, [ error => parse_error => \"$@" ]);
     }
     else {
         $result = [$result] if ref $result ne 'ARRAY';
