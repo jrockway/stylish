@@ -1,3 +1,6 @@
+(require 'stylish)
+
+(stylish-register-handler 'highlight 'stylish-handler-highlight)
 
 (defvar stylish-pending-highlight-requests nil
   "An alist of (tag . buffer) pairs waiting for syntaxification

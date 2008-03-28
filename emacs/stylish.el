@@ -49,8 +49,8 @@ should run this before sending data to the Stylish server."
       (error (message "Error in stylish filter %s: %s" (car error) (cdr error))))))
 
 (defun stylish-register-handler (action handler)
-
-        (highlight . stylish-handler-highlight)
+  "Register an (action . handler)."
+  (add-to-list 'stylish-dispatch-alist (cons action handler)))
 
 (defun stylish-handler-welcome (information)
   "Show welcome message after connecting to Stylish server"
