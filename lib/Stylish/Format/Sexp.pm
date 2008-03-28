@@ -1,10 +1,10 @@
-package Server::Stylish::Format::Sexp;
+package Stylish::Format::Sexp;
 use Moose;
 use feature ':5.10';
 
 use Data::SExpression;
 
-with 'Server::Stylish::Format';
+with 'Stylish::Format';
 
 has 'parser' => (
     is  => 'ro',

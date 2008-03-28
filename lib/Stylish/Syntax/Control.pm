@@ -1,4 +1,4 @@
-package Server::Stylish::Syntax::Control;
+package Stylish::Syntax::Control;
 use Moose;
 use MooseX::AttributeHelpers;
 use Moose::Util::TypeConstraints;

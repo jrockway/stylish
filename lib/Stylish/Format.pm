@@ -1,4 +1,4 @@
-package Server::Stylish::Format;
+package Stylish::Format;
 use Moose::Role;
 
 requires 'format';

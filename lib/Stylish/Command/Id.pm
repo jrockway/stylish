@@ -1,4 +1,4 @@
-package Server::Stylish::Command::Id;
+package Stylish::Command::Id;
 use Moose::Role;
 
 sub command_id {

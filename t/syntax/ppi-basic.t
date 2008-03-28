@@ -2,9 +2,9 @@ use strict;
 use warnings;
 use Test::More tests => 3;
 
-use Server::Stylish::Syntax::PPI;
+use Stylish::Syntax::PPI;
 
-my $doc = Server::Stylish::Syntax::PPI->new(document => <<'PERL');
+my $doc = Stylish::Syntax::PPI->new(document => <<'PERL');
 use strict; 
 use Foo::Bar 0.1234;
 use Quux::Baz;

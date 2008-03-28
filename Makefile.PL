@@ -1,7 +1,7 @@
 use inc::Module::Install;
 
-name 'Server-Stylish';
-all_from 'lib/Server/Stylish.pm';
+name 'Stylish';
+all_from 'lib/Stylish.pm';
 
 requires 'Data::SExpression';
 requires 'Moose';

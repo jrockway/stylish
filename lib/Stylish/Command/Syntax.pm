@@ -1,11 +1,11 @@
-package Server::Stylish::Command::Syntax;
+package Stylish::Command::Syntax;
 use Moose::Role;
 
-use Server::Stylish::Syntax::PPI;
+use Stylish::Syntax::PPI;
 
 sub command_highlight {
     my ($self, $client, $tag, $offset, $code) = @_;
-    my $doc = Server::Stylish::Syntax::PPI->new(document => $code);
+    my $doc = Stylish::Syntax::PPI->new(document => $code, offset => $offset);
     return [ 
         highlight => [
             [ tag    => $tag ],

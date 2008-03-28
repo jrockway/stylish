@@ -1,10 +1,10 @@
-package Server::Stylish::Syntax::PPI;
+package Stylish::Syntax::PPI;
 use feature ':5.10';
 use Moose;
 use Moose::Util::TypeConstraints;
 use PPI;
 
-use Server::Stylish::Syntax::Control;
+use Stylish::Syntax::Control;
 
 subtype 'PPI::Document',
   as 'Class',
@@ -27,9 +27,9 @@ has 'document' => (
 
 has 'syntax_controller' => (
     is      => 'ro',
-    isa     => 'Server::Stylish::Syntax::Control',
+    isa     => 'Stylish::Syntax::Control',
     default => sub {
-        Server::Stylish::Syntax::Control->new,
+        Stylish::Syntax::Control->new,
       }
 );
 

@@ -1,4 +1,4 @@
-package Server::Stylish;
+package Stylish::Server;
 use MooseX::POE;
 use Moose::Util::TypeConstraints;
 use Scalar::Util qw(refaddr);
@@ -9,16 +9,16 @@ use MooseX::AttributeHelpers;
 our $VERSION = '0.01';
 
 with qw/MooseX::LogDispatch::Levels
-        Server::Stylish::Command::Id
-        Server::Stylish::Command::Syntax
+        Stylish::Command::Id
+        Stylish::Command::Syntax
        /;
 
 has 'formatter' => (
     is        => 'ro',
-    does      => 'Server::Stylish::Format',
+    does      => 'Stylish::Format',
     default   => sub {
-        require Server::Stylish::Format::Sexp;
-        Server::Stylish::Format::Sexp->new;
+        require Stylish::Format::Sexp;
+        Stylish::Format::Sexp->new;
     },
 );
 
