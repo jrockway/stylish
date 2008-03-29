@@ -9,6 +9,12 @@
 (defvar stylish-process "stylish"
   "The name of the Stylish process")
 
+(defvar stylish-server-info-alist nil
+  "Information about the Stylish server")
+
+(defun stylish-server-version nil (caddr (assoc :version stylish-server-info-alist)))
+(defun stylish-session-id nil (cadr (assoc :session-id stylish-server-info-alist)))
+
 (defvar stylish-dispatch-alist nil
   "Map frommessage type to handler function")
 (setq stylish-dispatch-alist 
@@ -23,13 +29,15 @@
   "Connect to a stylish Stylish server"
   (interactive)
   (setq stylish-tq nil)
-  (let ((p (open-network-stream 
-            stylish-process "*inferior stylish*" 
-            stylish-host stylish-port)))
-    
-    (set-process-coding-system p 'utf-8 'utf-8)
-    (set-process-filter p 'stylish-filter)
-    p))
+  (condition-case nil
+      (let ((p (open-network-stream 
+                stylish-process "*inferior stylish*" 
+                stylish-host stylish-port)))
+        (set-process-coding-system p 'utf-8 'utf-8)
+        (set-process-filter p 'stylish-filter)
+        p)
+    (error (setq stylish-server-info-alist nil)
+           (error "Failed to connect to the Stylish server!"))))
 
 (defun stylish nil
   "Connect to the Stylish server, unless already connected.  You
@@ -56,6 +64,7 @@ should run this before sending data to the Stylish server."
   "Show welcome message after connecting to Stylish server"
   (let ((session-id (cadr (assoc :session-id information)))
         (version    (cdr  (assoc :version information))))
+    (setq stylish-server-info-alist information)
     (message "Connected to %s %s (sessionid %s)" 
              (car version) (cadr version) session-id)))
 
