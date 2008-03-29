@@ -2,17 +2,11 @@
 
 (stylish-register-handler 'repl 'stylish-handler-repl)
 
-(defvar stylish-repl-history nil
+(defvar stylish-repl-history (make-ring 50)
   "History of commands you've entered into the REPL.")
 
-(defvar stylish-repl-prompt-map nil
-  "The keymap when at the PERL> prompt")
-
-(setq stylish-repl-prompt-map 
-      (let ((k (make-sparse-keymap)))
-        (define-key k (kbd "<RET>") 'stylish-repl-send)
-        (define-key k (kbd "C-a") 'stylish-repl-beginning-of-line)
-        k))
+(defvar stylish-repl-history-id -1
+  "Which history element we're using right now.  Reset by `stylish-repl-send'.")
 
 ; custom
 
@@ -41,6 +35,16 @@
   "The face the query is changed to after its sent to the REPL."
   :group 'stylish-repl)
 
+(defface stylish-repl-stdout-face
+  '((t nil))
+  "The face for anything sent to STDOUT on the perl side."
+  :group 'stylish-repl)
+
+(defface stylish-repl-stderr-face
+  '((t :foreground "red"))
+  "The face for anything sent to STDERR on the perl side."
+  :group 'stylish-repl)
+
 (defun stylish-repl nil
   "Spawn a Stylish REPL buffer"
   (interactive)
@@ -55,6 +59,11 @@
            (stylish-server-version) (stylish-session-id))
    'stylish-repl-message-face)
   (message "Let the hacking commence!")
+  (define-key stylish-repl-mode-map (kbd "<RET>") 'stylish-repl-send)
+  (define-key stylish-repl-mode-map (kbd "C-a") 'stylish-repl-beginning-of-line)
+  (define-key stylish-repl-mode-map (kbd "C-c C-c") 'stylish-repl-OH-NOES)
+  (define-key stylish-repl-mode-map (kbd "<up>") 'stylish-repl-history-up)
+  (define-key stylish-repl-mode-map (kbd "<down>") 'stylish-repl-history-down)
   (insert-stylish-repl-prompt))
 
 (defun stylish-repl-usual-properties (start end &optional face)
@@ -71,18 +80,22 @@
     (insert text)
     (stylish-repl-usual-properties begin (point) face)))
 
-(defun stylish-handler-repl (status result)
+(defun stylish-handler-repl (status result - stdout -- stderr)
   "Handle a return from the REPL"
   (with-current-buffer (get-buffer "*Stylish REPL*")
     (save-excursion 
       (goto-char (point-max))
+      (unless (zerop (length stderr))
+        (stylish-repl-insert (concat stderr "\n") 'stylish-repl-stderr-face))
+      (unless (zerop (length stdout))
+        (stylish-repl-insert (concat stdout "\n") 'stylish-repl-stdout-face))
       (let ((face (if (eq status :error) 
                       'stylish-repl-error-face 'stylish-repl-result-face)))
         (stylish-repl-insert (concat result "\n") face))
       (insert-stylish-repl-prompt))
     (goto-char (point-max))))
 
-(defun stylish-repl-input-region nil
+(defun stylish-repl-input-region-bounds nil
   "Determine the Stylish input region"
   ;; XXX: rewrite this to use properties instead of regexen!
   (save-excursion
@@ -92,14 +105,24 @@
           (end   (save-excursion (end-of-line) (point))))
       (cons start end))))
 
-(defun stylish-repl-send nil
-  "Send a command to the REPL"
-  (interactive)
+(defun stylish-repl-input-region-text nil
+  "Return the text inside `stylish-repl-input-region-bounds'."
   (let* ((region (stylish-repl-input-region))
          (start (car region))
-         (end (cdr region)))
+         (end (cdr region))
+         (text (buffer-substring-no-properties start end)))
+    text))
+
+(defun stylish-repl-send (&optional nosave)
+  "Send a command to the REPL"
+  (interactive)
+  (let* ((region (stylish-repl-input-region-bounds))
+         (start (car region))
+         (end (cdr region))
+         (text (stylish-repl-input-region-text)))
     (stylish-repl-usual-properties start end 'stylish-repl-sent-face)
-    (stylish-send-command 'repl (buffer-substring-no-properties start end)))
+    (stylish-send-command 'repl text)
+    (unless nosave (stylish-repl-history-add text)))
   (stylish-repl-insert "\n"))
 
 (defun stylish-repl-send-file (&optional buffer)
@@ -115,8 +138,53 @@
 (defun insert-stylish-repl-prompt nil
   "Insert the REPL prompt"
   (stylish-repl-insert "PERL>" font-lock-keyword-face)
-  (stylish-repl-insert (propertize " " 'local-map stylish-repl-prompt-map)))
+  (stylish-repl-insert " "))
 
 (defun stylish-repl-beginning-of-line nil
   (interactive)
   (goto-char (car (stylish-repl-input-region))))
+
+(defun stylish-repl-OH-NOES nil
+  "Reconnect to the stylish server if output gets out of sync or something"
+  (interactive)
+  (stylish-repl-insert "\nRestarting the Stylish REPL\n" 'stylish-repl-message-face)
+  (stylish-repl)
+  (sleep-for .5)
+  (insert "\"ok?\"")
+  (stylish-repl-send))
+
+(defun stylish-repl-history-add (text)
+  (stylish-repl-history-reset)
+  (ring-insert stylish-repl-history text))
+
+(defun stylish-repl-history-reset nil
+  (setq stylish-repl-history-id -1))
+
+(defun stylish-repl-history-up nil
+  (interactive)
+  (when (eq stylish-repl-history-id -1)
+    (let ((current (stylish-repl-input-region-text)))
+      (if (not (zerop (length current)))
+          (stylish-repl-history-add current))))
+  (let* ((bounds (stylish-repl-input-region-bounds))
+         (start (car bounds)) (end (cdr bounds))
+         (h (ring-ref stylish-repl-history (+ 1 stylish-repl-history-id))))
+    (if (not h) (error "No more history!")
+      (incf stylish-repl-history-id)
+      (goto-char start)
+      (delete-region start end)
+      (insert h)
+      (goto-char (point-max)))))
+
+(defun stylish-repl-history-down nil
+  (interactive)
+  (when (< stylish-repl-history-id 1)
+    (error "Can't look into the future!"))
+  (decf stylish-repl-history-id)
+  (let* ((bounds (stylish-repl-input-region-bounds))
+         (start (car bounds)) (end (cdr bounds))
+         (h (ring-ref stylish-repl-history stylish-repl-history-id)))
+    (goto-char start)
+    (delete-region start end)
+    (insert h)
+    (goto-char (point-max))))
