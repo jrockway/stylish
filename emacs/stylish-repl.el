@@ -144,7 +144,9 @@
 (defun insert-stylish-repl-prompt nil
   "Insert the REPL prompt"
   (stylish-repl-insert "PERL>" font-lock-keyword-face)
-  (stylish-repl-insert " "))
+  (stylish-repl-insert " ")
+  (goto-char (point-max))
+  (set-window-point (get-buffer-window (current-buffer)) (point-max)))
 
 (defun stylish-repl-beginning-of-line nil
   (interactive)
