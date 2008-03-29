@@ -53,17 +53,22 @@
 
 (define-derived-mode stylish-repl-mode fundamental-mode "Stylish[REPL]"
   "The major mode for the Stylish REPL buffer."
-  (stylish) ; XXX: version number isn't picked up if we reconnect here
-  (stylish-repl-insert 
-   (format "Welcome to the Stylish REPL! (Stylish %s - id %s)\n"
-           (stylish-server-version) (stylish-session-id))
-   'stylish-repl-message-face)
-  (message "Let the hacking commence!")
+
   (define-key stylish-repl-mode-map (kbd "<RET>") 'stylish-repl-send)
   (define-key stylish-repl-mode-map (kbd "C-a") 'stylish-repl-beginning-of-line)
   (define-key stylish-repl-mode-map (kbd "C-c C-c") 'stylish-repl-OH-NOES)
   (define-key stylish-repl-mode-map (kbd "<up>") 'stylish-repl-history-up)
   (define-key stylish-repl-mode-map (kbd "<down>") 'stylish-repl-history-down)
+
+  (condition-case e
+      (stylish)
+    (error 
+     (stylish-repl-insert "Error connecting to Stylish server!\n"
+                          'stylish-repl-stderr-face)
+     (error e))) ; redispatch
+  
+  (stylish-repl-insert "Welcome to the Stylish REPL!\n" 'stylish-repl-message-face)
+  (message "Let the hacking commence!")
   (insert-stylish-repl-prompt))
 
 (defun stylish-repl-usual-properties (start end &optional face)
