@@ -162,15 +162,17 @@
 
 (defun stylish-repl-history-up nil
   (interactive)
+
   (when (eq stylish-repl-history-id -1)
     (let ((current (stylish-repl-input-region-text)))
-      (if (not (zerop (length current)))
-          (stylish-repl-history-add current))))
+      (stylish-repl-history-add current))
+    (incf stylish-repl-history-id))
+
+  (incf stylish-repl-history-id)
   (let* ((bounds (stylish-repl-input-region-bounds))
          (start (car bounds)) (end (cdr bounds))
-         (h (ring-ref stylish-repl-history (+ 1 stylish-repl-history-id))))
+         (h (ring-ref stylish-repl-history stylish-repl-history-id)))
     (if (not h) (error "No more history!")
-      (incf stylish-repl-history-id)
       (goto-char start)
       (delete-region start end)
       (insert h)
