@@ -55,5 +55,3 @@ results to come back.")
   "Turn on stylish syntaxifier"
   (interactive)
   (add-hook 'post-command-hook 'stylish-do-current-line nil t))
-
-  
