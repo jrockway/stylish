@@ -191,3 +191,14 @@
     (delete-region start end)
     (insert h)
     (goto-char (point-max))))
+;;
+;;(defun stylish-repl-highlight-input ()
+;;  (interactive)
+;;  (let ((bounds (stylish-repl-input-region-bounds)))
+;;    (stylish-syntaxify (car bounds) (cdr bounds) (get-buffer "*Stylish REPL*"))))
+;;
+;;(defun turn-on-stylish-syntax nil
+;;  "Turn on stylish syntaxifier in the REPL"
+;;  (interactive)
+;;  (with-current-buffer (get-buffer "*Stylish REPL*")
+;;    (add-hook 'post-command-hook 'stylish-repl-highlight-input)))
