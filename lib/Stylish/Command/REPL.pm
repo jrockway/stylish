@@ -2,6 +2,7 @@ package Stylish::Command::REPL;
 use Moose::Role;
 
 use Stylish::REPL;
+use IO::CaptureOutput qw(capture);
 
 # TODO: per-client?
 has 'REPL' => (
@@ -32,10 +33,19 @@ sub command_repl {
     $self->REPL->error($get_error);
 
     # eval the request (and format if there are no errors)
-    my @result = $self->REPL->eval($string);
-    $self->REPL->print(@result) unless $status;
+    my ($stdout, $stderr);
+    capture {
+        my @result = $self->REPL->eval($string);
+        $self->REPL->print(@result) unless $status;
+    } \$stdout, \$stderr;
     
-    return ['repl', ":$status", \$result];
+    return [
+        repl => 
+          ":$status", \$result,
+        ':stdout', \$stdout,
+        ':stderr', \$stderr,
+    ];
+            
 }
 
 sub command_repl_load_file {

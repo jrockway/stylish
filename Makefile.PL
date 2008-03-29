@@ -4,12 +4,14 @@ name 'Stylish';
 all_from 'lib/Stylish.pm';
 
 requires 'Data::SExpression';
+requires 'Devel::REPL';
+requires 'IO::CaptureOutput';
 requires 'Moose';
 requires 'Moose::Util::TypeConstraints';
-requires 'PPI';
+requires 'MooseX::LogDispatch::Levels';
 requires 'POE';
 requires 'POE::Component::Server::TCP';
-requires 'MooseX::LogDispatch::Levels';
+requires 'PPI';
 build_requires 'Test::More';
 build_requires 'ok';
 
