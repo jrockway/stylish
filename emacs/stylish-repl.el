@@ -123,6 +123,7 @@
     (stylish-repl-usual-properties start end 'stylish-repl-sent-face)
     (stylish-send-command 'repl text)
     (unless nosave (stylish-repl-history-add text)))
+  (end-of-line)
   (stylish-repl-insert "\n"))
 
 (defun stylish-repl-send-file (&optional buffer)
