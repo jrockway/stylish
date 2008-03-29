@@ -49,7 +49,6 @@ results to come back.")
     (stylish-syntaxify (save-excursion (beginning-of-line) (point))
                        (save-excursion (end-of-line) (point))
                        (current-buffer))))
-  (incf foo))
 
 (defun turn-on-stylish-syntax nil
   "Turn on stylish syntaxifier"
