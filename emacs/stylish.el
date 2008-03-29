@@ -12,6 +12,10 @@
 (defvar stylish-server-info-alist nil
   "Information about the Stylish server")
 
+(defgroup stylish nil
+  "Stylish"
+  :prefix "stylish-")
+
 (defun stylish-server-version nil (caddr (assoc :version stylish-server-info-alist)))
 (defun stylish-session-id nil (cadr (assoc :session-id stylish-server-info-alist)))
 
