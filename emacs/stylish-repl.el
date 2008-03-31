@@ -8,6 +8,9 @@
 (defvar stylish-repl-history-id -1
   "Which history element we're using right now.  Reset by `stylish-repl-send'.")
 
+(defvar stylish-repl-prompt-map nil
+  "Keymap used when at the PERL> prompt")
+
 ; custom
 
 (defgroup stylish-repl nil
@@ -53,12 +56,17 @@
 
 (define-derived-mode stylish-repl-mode fundamental-mode "Stylish[REPL]"
   "The major mode for the Stylish REPL buffer."
+  
+  (setq stylish-repl-prompt-map 
+        (let ((k (make-sparse-keymap)))
+          (set-keymap-parent k stylish-repl-mode-map)))
 
-  (define-key stylish-repl-mode-map (kbd "<RET>") 'stylish-repl-send)
-  (define-key stylish-repl-mode-map (kbd "C-a") 'stylish-repl-beginning-of-line)
-  (define-key stylish-repl-mode-map (kbd "C-c C-c") 'stylish-repl-OH-NOES)
-  (define-key stylish-repl-mode-map (kbd "<up>") 'stylish-repl-history-up)
-  (define-key stylish-repl-mode-map (kbd "<down>") 'stylish-repl-history-down)
+  (define-key stylish-repl-prompt-map (kbd "<RET>") 'stylish-repl-send)
+  (define-key stylish-repl-prompt-map (kbd "C-a") 'stylish-repl-beginning-of-line)
+  (define-key stylish-repl-prompt-map (kbd "C-c C-c") 'stylish-repl-OH-NOES)
+  ; i would prefer up/down, but that's a little weird in emacs
+  (define-key stylish-repl-prompt-map (kbd "M-p") 'stylish-repl-history-up)
+  (define-key stylish-repl-prompt-map (kbd "M-n") 'stylish-repl-history-down)
 
   (condition-case e
       (stylish)
@@ -73,11 +81,10 @@
 
 (defun stylish-repl-usual-properties (start end &optional face)
   (let ((inhibit-read-only t)) ; fuck you, read-only.
-    (when face
-      (put-text-property start end 'face face))
-    (put-text-property start end 'read-only t)
-    (put-text-property start end 'intangible t)
-    (put-text-property start end 'rear-nonsticky '(read-only face intangible))))
+    (when face (put-text-property start end 'face face))
+    ;(put-text-property start end 'intangible t)
+    (put-text-property start end 'rear-nonsticky '(face intangible))
+    (put-text-property start end 'read-only t)))
 
 (defun stylish-repl-insert (text &optional face)
   "Insert immutable text into the Stylish REPL buffer"
@@ -112,7 +119,7 @@
 
 (defun stylish-repl-input-region-text nil
   "Return the text inside `stylish-repl-input-region-bounds'."
-  (let* ((region (stylish-repl-input-region))
+  (let* ((region (stylish-repl-input-region-bounds))
          (start (car region))
          (end (cdr region))
          (text (buffer-substring-no-properties start end)))
@@ -144,13 +151,13 @@
 (defun insert-stylish-repl-prompt nil
   "Insert the REPL prompt"
   (stylish-repl-insert "PERL>" font-lock-keyword-face)
-  (stylish-repl-insert " ")
+  (let ((inhibit-read-only t)) (insert (propertize " " 'read-only nil)))
   (goto-char (point-max))
   (set-window-point (get-buffer-window (current-buffer)) (point-max)))
 
 (defun stylish-repl-beginning-of-line nil
   (interactive)
-  (goto-char (car (stylish-repl-input-region))))
+  (goto-char (car (stylish-repl-input-region-bounds))))
 
 (defun stylish-repl-OH-NOES nil
   "Reconnect to the stylish server if output gets out of sync or something"
@@ -209,3 +216,5 @@
 ;;  (interactive)
 ;;  (with-current-buffer (get-buffer "*Stylish REPL*")
 ;;    (add-hook 'post-command-hook 'stylish-repl-highlight-input)))
+
+(provide 'stylish-repl)
