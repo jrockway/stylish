@@ -168,25 +168,47 @@
   (insert "\"ok?\"")
   (stylish-repl-send))
 
-(defun stylish-repl-history-add (text)
-  (stylish-repl-history-reset)
-  (ring-insert stylish-repl-history text))
+
+(defun stylish-repl-history-cleanup nil
+  "Remove all elements from the history ring that have a true
+cdr."
+  ;; clean out the partials
+  (catch :done
+    (loop for i from 0 to 50
+          do
+          (ignore-errors 
+            (when (cdr (ring-ref stylish-repl-history i))
+              (ring-remove stylish-repl-history i)
+              (throw :done))))))
 
 (defun stylish-repl-history-reset nil
+  "Cleanup the REPL history; remove temporary items, reset index
+to -1."
+  (stylish-repl-history-cleanup)
   (setq stylish-repl-history-id -1))
+
+(defun stylish-repl-history-add (text &optional temp)
+  "Add TEXT as the most recent REPL history item.  TEMP should be
+true if we should remove this element in
+`stylish-repl-history-cleanup'."
+  (stylish-repl-history-reset)
+  (ring-insert stylish-repl-history (cons text tag)))
+
+(defun stylish-repl-history-get nil
+  (car (ring-ref stylish-repl-history stylish-repl-history-id)))
 
 (defun stylish-repl-history-up nil
   (interactive)
-
+  ;; first time we go up, save the half-entred line
   (when (eq stylish-repl-history-id -1)
     (let ((current (stylish-repl-input-region-text)))
-      (stylish-repl-history-add current))
+      (stylish-repl-history-add current t))
     (incf stylish-repl-history-id))
-
+  ;; other times, continue up the loop
   (incf stylish-repl-history-id)
   (let* ((bounds (stylish-repl-input-region-bounds))
          (start (car bounds)) (end (cdr bounds))
-         (h (ring-ref stylish-repl-history stylish-repl-history-id)))
+         (h (stylish-repl-history-get)))
     (if (not h) (error "No more history!")
       (goto-char start)
       (delete-region start end)
@@ -200,7 +222,7 @@
   (decf stylish-repl-history-id)
   (let* ((bounds (stylish-repl-input-region-bounds))
          (start (car bounds)) (end (cdr bounds))
-         (h (ring-ref stylish-repl-history stylish-repl-history-id)))
+         (h (stylish-repl-history-get)))
     (goto-char start)
     (delete-region start end)
     (insert h)
