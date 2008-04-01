@@ -85,7 +85,7 @@ the Perl REPL)"
                           'stylish-repl-stderr-face)
      (error e))) ; redispatch
   
-  (stylish-repl-insert "Welcome to the Stylish REPL!\n" 'stylish-repl-message-face)
+  (stylish-repl-message "Welcome to the Stylish REPL!")
   (message "Let the hacking commence!")
   (insert-stylish-repl-prompt))
 
@@ -95,15 +95,14 @@ the Perl REPL)"
                (list command function docstring)))
 
 (defun stylish-repl-command-help nil
-  (stylish-repl-insert "Known commands:\n\n" 'stylish-repl-message-face)
+  (stylish-repl-message "Known commands:")
   (loop for item in stylish-repl-internal-commands-alist
         do
-        (stylish-repl-insert 
-         (format ",%s\t\t%s (%s)\n"
+        (stylish-repl-message
+         (format ",%s\t\t%s (%s)"
                  (car item)
                  (caddr item)
-                 (cadr item))
-         'stylish-repl-message-face))
+                 (cadr item))))
   t)
 
 (stylish-repl-register-command "help" 'stylish-repl-command-help 
@@ -121,6 +120,10 @@ the Perl REPL)"
   (let ((inhibit-read-only t) (begin (point)))
     (insert text)
     (stylish-repl-usual-properties begin (point) face)))
+
+(defun stylish-repl-message (message)
+  "Insert a system-generated message"
+  (stylish-repl-insert (concat message "\n") 'stylish-repl-message-face))
 
 (defun stylish-handler-repl (status result - stdout -- stderr)
   "Handle a return from the REPL"
@@ -189,8 +192,7 @@ the Perl REPL)"
   (let ((fn (buffer-file-name buffer)))
     (stylish-send-command 'repl-load-file fn)
     (with-current-buffer (get-buffer "*Stylish REPL*")
-      (stylish-repl-insert
-       (format "\n# Sending %s\n" fn) 'stylish-repl-message-face))))
+      (stylish-repl-message (format "\n# Sending %s\n" fn)))))
 
 (defun insert-stylish-repl-prompt nil
   "Insert the REPL prompt"
@@ -206,7 +208,7 @@ the Perl REPL)"
 (defun stylish-repl-OH-NOES!!11! nil
   "Reconnect to the stylish server if output gets out of sync or something"
   (interactive)
-  (stylish-repl-insert "\nRestarting the Stylish REPL\n" 'stylish-repl-message-face)
+  (stylish-repl-message "\nRestarting the Stylish REPL")
   (stylish-repl)
   (sleep-for .5)
   (insert "\"ok?\"")
