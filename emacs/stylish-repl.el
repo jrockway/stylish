@@ -240,8 +240,12 @@ true if we should remove this element in
   (stylish-repl-history-reset)
   (ring-insert stylish-repl-history (cons text temp)))
 
-(defun stylish-repl-history-get nil
-  (car (ring-ref stylish-repl-history stylish-repl-history-id)))
+(defun stylish-repl-history-get (&optional id)
+  "Return the IDth most recent history entry.  If ID is nil,
+return the `stylish-repl-history-id'-th history item.  0 is the
+most recent, 50 is the oldest."
+  (or id (setq id stylish-repl-history-id))
+  (car (ring-ref stylish-repl-history id)))
 
 (defun stylish-repl-history-up nil
   (interactive)
