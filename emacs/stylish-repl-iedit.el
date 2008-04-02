@@ -72,7 +72,6 @@ the REPL."
 (defun stylish-repl-ie-run nil
   "Send the entire list of lines to perl to evaluate."
   (let ((text (format "sub { %s }->();" (stylish-repl-ie-to-block))))
-    (stylish-repl-message (format "Sending:\n%s" text))
     (stylish-send-command 'repl text))
   nil)
 
