@@ -32,7 +32,7 @@
 (defun stylish-connect ()
   "Connect to a stylish Stylish server"
   (interactive)
-  (setq stylish-tq nil)
+  (setq stylish-partial-message nil)
   (condition-case nil
       (let ((p (open-network-stream 
                 stylish-process "*inferior stylish*" 
@@ -49,16 +49,30 @@ should run this before sending data to the Stylish server."
   (when (not (stylish-connected-p)) (stylish-connect))
   t)
 
+(defvar stylish-partial-message nil
+  "Long messages get split; this variable accumulates partial
+messages until we get a full one.")
+
 (defun stylish-filter (proc string)
-  (let* ((message (read string))
-         (type (car message))
-         (args (cdr message))
-         (handler (assoc type stylish-dispatch-alist)))
-    ;(message "Handling %s via %s" message (prin1-to-string (cdr handler)))
-    (condition-case error
-        (if handler (apply (cdr handler) args)
-          (error "No handler for message type %s" type))
-      (error (message "Error in stylish filter %s: %s" (car error) (cdr error))))))
+  (let* ((attempt (concat stylish-partial-message string)) 
+         (message (ignore-errors (read attempt))))
+    (if (not message)
+
+        ;; didn't get the whole message yet
+        (setq stylish-partial-message attempt)
+
+      ;; read was OK
+      (setq stylish-partial-message nil)
+      (let* ((type (car message))
+             (args (cdr message))
+             (handler (assoc type stylish-dispatch-alist)))
+        ;;(message "Handling %s via %s" message (prin1-to-string (cdr handler)))
+        (condition-case error
+            (if handler 
+                (apply (cdr handler) args)
+              (error "No handler for message type %s" type))
+          (error 
+           (message "Error in stylish filter %s: %s" (car error) (cdr error))))))))
 
 (defun stylish-register-handler (action handler)
   "Register an (action . handler)."
