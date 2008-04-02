@@ -22,10 +22,17 @@
 
 (defun stylish-repl-ie-list nil
   "Show the current list of lines"
-  (let (msg (count 0))
+  (with-temp-buffer
+    (ignore-errors (let (cperl-mode-hook) (cperl-mode)))
     (loop for line in stylish-repl-ie--editing
-          do (setq msg (format "%s%d: %s\n" (or msg "") (incf count) line)))
-    (stylish-repl-message msg))
+          do (goto-char (point-max)) (insert line) (insert "\n"))
+    (font-lock-fontify-buffer)
+    (let (msg (count 0))
+      (goto-char (point-min))
+      (while (re-search-forward "^\\(.+\\)$" nil t)
+        (setq msg (format "%s%d: %s\n" (or msg "") (incf count) (match-string 1))))
+      (with-current-buffer "*Stylish REPL*"
+        (stylish-repl-insert msg))))
   t)
 
 (stylish-repl-register-command "list" 'stylish-repl-ie-list)
@@ -71,7 +78,7 @@ the REPL."
 
 (defun stylish-repl-ie-run nil
   "Send the entire list of lines to perl to evaluate."
-  (let ((text (format "sub { %s }->();" (stylish-repl-ie-to-block))))
+  (let ((text (format "sub { %s }->();" (stylish-repl-ie-to-block ";"))))
     (stylish-send-command 'repl text))
   nil)
 
