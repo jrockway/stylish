@@ -15,6 +15,10 @@
   "Dispatch table for repl internal commands, elements are of the form:
    (name . function")
 
+(defvar stylish-repl-send-hooks nil
+  "Commands to run after a query has been sent to the REPL.  Not
+triggered when an `internal' command is run.")
+
 ; custom
 
 (defgroup stylish-repl nil
@@ -169,7 +173,9 @@ the Perl REPL)"
     (end-of-line)
     (stylish-repl-insert "\n")
     (if (not (string-match "^," text)) ; perl or internal command?
-        (stylish-send-command 'repl text)
+        (progn 
+          (run-hooks 'stylish-repl-send-hooks)
+          (stylish-send-command 'repl text))
       (stylish-repl-process-internal-command text))))
 
 (defun stylish-repl-process-internal-command (command)
