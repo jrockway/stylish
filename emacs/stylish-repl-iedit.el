@@ -56,4 +56,20 @@ the REPL."
 
 (stylish-repl-register-command "delete" 'stylish-repl-ie-delete-last-line)
 
+(defun stylish-repl-ie-to-block (&optional join-char)
+  "Convert the entire list of lines to a code block."
+  (let (msg)
+    (loop for line in stylish-repl-ie--editing
+          do (setq msg (concat msg line (or join-char " "))))
+    msg))
+
+(defun stylish-repl-ie-run nil
+  "Send the entire list of lines to perl to evaluate."
+  (let ((text (format "sub { %s }->();" (stylish-repl-ie-to-block))))
+    (stylish-repl-message (format "Sending:\n%s" text))
+    (stylish-send-command 'repl text))
+  nil)
+
+(stylish-repl-register-command "run" 'stylish-repl-ie-run)
+
 (provide 'stylish-repl-iedit)
