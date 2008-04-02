@@ -22,17 +22,18 @@
 
 (defun stylish-repl-ie-list nil
   "Show the current list of lines"
-  (with-temp-buffer
-    (ignore-errors (let (cperl-mode-hook) (cperl-mode)))
-    (loop for line in stylish-repl-ie--editing
-          do (goto-char (point-max)) (insert line) (insert "\n"))
-    (font-lock-fontify-buffer)
-    (let (msg (count 0))
-      (goto-char (point-min))
-      (while (re-search-forward "^\\(.+\\)$" nil t)
-        (setq msg (format "%s%d: %s\n" (or msg "") (incf count) (match-string 1))))
-      (with-current-buffer "*Stylish REPL*"
-        (stylish-repl-insert msg))))
+  (when stylish-repl-ie--editing
+    (with-temp-buffer
+      (ignore-errors (let (cperl-mode-hook) (cperl-mode)))
+      (loop for line in stylish-repl-ie--editing
+            do (goto-char (point-max)) (insert line) (insert "\n"))
+      (font-lock-fontify-buffer)
+      (let (msg (count 0))
+        (goto-char (point-min))
+        (while (re-search-forward "^\\(.+\\)$" nil t)
+          (setq msg (format "%s%d: %s\n" (or msg "") (incf count) (match-string 1))))
+        (with-current-buffer "*Stylish REPL*"
+          (stylish-repl-insert msg)))))
   t)
 
 (stylish-repl-register-command "list" 'stylish-repl-ie-list)
@@ -83,5 +84,25 @@ the REPL."
   nil)
 
 (stylish-repl-register-command "run" 'stylish-repl-ie-run)
+
+
+(defun stylish-repl-yank-handler (string)
+  "Called when the edited lines are yanked into a buffer."
+  (save-excursion
+    (let ((start (point)) end)
+      (insert string)
+      (setq end (point))
+      (indent-region start end)
+      (goto-char end))
+    (stylish-repl-ie-clear)))
+
+(defun stylish-repl-ie-copy-to-kill nil
+  "Copies the current editing text to the kill ring.  When you
+yank this into a buffer, the editing history will be erased."
+  (kill-new (stylish-repl-ie-to-block "\n") nil 
+            '(stylish-repl-yank-handler))
+  t)
+
+(stylish-repl-register-command "kill" 'stylish-repl-ie-copy-to-kill)
 
 (provide 'stylish-repl-iedit)
