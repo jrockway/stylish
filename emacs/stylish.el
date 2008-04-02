@@ -12,6 +12,10 @@
 (defvar stylish-server-info-alist nil
   "Information about the Stylish server")
 
+(defvar stylish-partial-message nil
+  "Long messages get split; this variable accumulates partial
+messages until we get a full one.")
+
 (defgroup stylish nil
   "Stylish"
   :prefix "stylish-")
@@ -48,10 +52,6 @@
 should run this before sending data to the Stylish server."
   (when (not (stylish-connected-p)) (stylish-connect))
   t)
-
-(defvar stylish-partial-message nil
-  "Long messages get split; this variable accumulates partial
-messages until we get a full one.")
 
 (defun stylish-filter (proc string)
   (let* ((attempt (concat stylish-partial-message string)) 
@@ -95,6 +95,7 @@ messages until we get a full one.")
   "Send a COMMAND with ARGS to the Stylish server.  The result is returned
 asynchronously.  See [stylish-filter] and [stylish-dispatch-alist]."
   (stylish)
+  (setq stylish-partial-message nil) ; cancel partial message
   (let ((message (prin1-to-string (cons command args))))
     (process-send-string "stylish" (format "%s\n" message))))
 
