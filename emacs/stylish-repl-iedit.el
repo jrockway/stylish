@@ -48,4 +48,12 @@ the REPL."
                     (append (reverse (cdr (reverse stylish-repl-ie--editing)))
                             (list text))))))
 
+(defun stylish-repl-ie-delete-last-line nil
+  "Delete the most recently added line."
+  (setq stylish-repl-ie--editing (reverse (cdr (reverse stylish-repl-ie--editing))))
+  (stylish-repl-ie-list)
+  t)
+
+(stylish-repl-register-command "delete" 'stylish-repl-ie-delete-last-line)
+
 (provide 'stylish-repl-iedit)
