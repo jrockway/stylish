@@ -16,7 +16,7 @@ results to come back.")
 (defun stylish-syntaxify (start end &optional buffer)
   "Send BUFFER's text between START and END to Stylish for fontification."
   (when (not buffer) (setq buffer (current-buffer)))
-  (remove-text-properties start end '(face nil) buffer)
+  (remove-text-properties start end '(face nil) buffer) ; XXX?
   (let ((text (buffer-substring-no-properties start end))
         (tag (random)))
     (while (string-match "\n" text)
@@ -24,12 +24,14 @@ results to come back.")
     (add-to-list 'stylish-pending-highlight-requests (cons tag buffer))
     (stylish-send-command 'highlight tag start text)))
 
+
 (defun stylish-handler-highlight (result)
   "Handle the syntaxification result."
   (let* ((tag    (cadr (assoc 'tag result)))
          (data   (cadr (assoc 'result result)))
          (buffer (cdr (assoc tag stylish-pending-highlight-requests))))
-    ;(delq (cons tag buffer) stylish-pending-highlight-requests)
+    (setq stylish-pending-highlight-requests
+          (delete (cons tag buffer) stylish-pending-highlight-requests))
     (setq stylish-pending-highlight-requests nil)
     (with-current-buffer buffer
       (loop for rule in data
@@ -40,15 +42,20 @@ results to come back.")
                                   font-lock-warning-face)))
                  (add-text-properties start end (list 'face face) buffer))))))
 
-(defvar last-syntax 0)
+(defvar stylish--last-syntax 0)
 (defun stylish-do-current-line nil
   (interactive)
-  (make-local-variable 'last-syntax)
-  (when (> (- (cadr (current-time)) last-syntax) 1)
-    (setq last-syntax (cadr (current-time)))
+  (make-variable-buffer-local 'stylish--last-syntax)
+  (when (> (- (cadr (current-time)) stylish--last-syntax) 1)
+    (setq stylish--last-syntax (cadr (current-time)))
     (stylish-syntaxify (save-excursion (beginning-of-line) (point))
                        (save-excursion (end-of-line) (point))
                        (current-buffer))))
+
+(defun stylish-do-buffer (&optional buffer)
+  (interactive)
+  (or buffer (setq buffer (current-buffer)))
+  (stylish-handler-highlight 
 
 (defun turn-on-stylish-syntax nil
   "Turn on stylish syntaxifier"
