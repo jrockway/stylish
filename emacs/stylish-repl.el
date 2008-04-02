@@ -13,7 +13,7 @@
 
 (defvar stylish-repl-internal-commands-alist nil
   "Dispatch table for repl internal commands, elements are of the form:
-   (name function docstring")
+   (name . function")
 
 ; custom
 
@@ -89,24 +89,23 @@ the Perl REPL)"
   (message "Let the hacking commence!")
   (insert-stylish-repl-prompt))
 
-(defun stylish-repl-register-command (command function &optional docstring)
+(defun stylish-repl-register-command (command function)
   "Add a new command to the repl internal commands dispatch table."
-  (add-to-list 'stylish-repl-internal-commands-alist 
-               (list command function docstring)))
+  (add-to-list 'stylish-repl-internal-commands-alist  (cons command function)))
 
 (defun stylish-repl-command-help nil
+  "Show this help message."
   (stylish-repl-message "Known commands:")
   (loop for item in stylish-repl-internal-commands-alist
         do
         (stylish-repl-message
          (format ",%s\t\t%s (%s)"
                  (car item)
-                 (caddr item)
-                 (cadr item))))
+                 (documentation (cdr item))
+                 (cdr item))))
   t)
 
-(stylish-repl-register-command "help" 'stylish-repl-command-help 
-                               "get a list of commands")
+(stylish-repl-register-command "help" 'stylish-repl-command-help)
 
 (defun stylish-repl-usual-properties (start end &optional face)
   (let ((inhibit-read-only t)) ; fuck you, read-only.
@@ -170,14 +169,14 @@ the Perl REPL)"
     (end-of-line)
     (stylish-repl-insert "\n")
     (if (not (string-match "^," text)) ; perl or internal command?
-        (stylish-send-command 'repl text) 
+        (stylish-send-command 'repl text)
       (stylish-repl-process-internal-command text))))
 
 (defun stylish-repl-process-internal-command (command)
   "Run the internal command COMMAND."
   (setq command (substring command 1)) ; remove leading ,
   (let* ((c (assoc command stylish-repl-internal-commands-alist))
-         (handler (cadr c))
+         (handler (cdr c))
          (prompt t))
     (if (not c)
         (stylish-repl-insert (format "No command called %s\n" command) 
