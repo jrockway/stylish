@@ -56,6 +56,12 @@ the REPL."
 
 (stylish-repl-register-command "delete" 'stylish-repl-ie-delete-last-line)
 
+(defun stylish-repl-ie-clear nil
+  "Clear all lines."
+  (setq stylish-repl-ie--editing nil) t)
+
+(stylish-repl-register-command "clear" 'stylish-repl-ie-clear)
+
 (defun stylish-repl-ie-to-block (&optional join-char)
   "Convert the entire list of lines to a code block."
   (let (msg)
