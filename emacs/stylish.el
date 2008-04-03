@@ -16,6 +16,13 @@
   "Long messages get split; this variable accumulates partial
 messages until we get a full one.")
 
+(defvar stylish-post-connect-hook nil
+  "Hook that is run after connecting (or reconnecting) to the server.")
+
+(defvar stylish-pre-send-command-hook nil
+  "Hook that is run before sending a command to the server (but
+after the connection is setup, if necessary).")
+
 (defgroup stylish nil
   "Stylish"
   :prefix "stylish-")
@@ -82,6 +89,7 @@ should run this before sending data to the Stylish server."
   "Show welcome message after connecting to Stylish server"
   (let ((session-id (cadr (assoc :session-id information)))
         (version    (cdr  (assoc :version information))))
+    (run-hooks 'stylish-post-connect-hook)
     (setq stylish-server-info-alist information)
     (message "Connected to %s %s (sessionid %s)" 
              (car version) (cadr version) session-id)))
@@ -95,6 +103,7 @@ should run this before sending data to the Stylish server."
   "Send a COMMAND with ARGS to the Stylish server.  The result is returned
 asynchronously.  See [stylish-filter] and [stylish-dispatch-alist]."
   (stylish)
+  (run-hooks 'stylish-pre-send-command-hook)
   (setq stylish-partial-message nil) ; cancel partial message
   (let ((message (prin1-to-string (cons command args))))
     (process-send-string "stylish" (format "%s\n" message))))
