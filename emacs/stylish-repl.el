@@ -19,6 +19,10 @@
   "Commands to run after a query has been sent to the REPL.  Not
 triggered when an `internal' command is run.")
 
+(defvar stylish-repl-restart-requested nil
+  "True if we have requested a reconnection and are waiting for
+the server to reply.")
+
 ; custom
 
 (defgroup stylish-repl nil
@@ -217,11 +221,15 @@ the Perl REPL)"
   "Reconnect to the stylish server if output gets out of sync or something"
   (interactive)
   (stylish-repl-message "\nRestarting the Stylish REPL")
-  (stylish-repl)
-  (sleep-for .5)
-  (insert "\"ok?\"")
-  (stylish-repl-send))
+  (setq stylish-repl-restart-requested t)
+  (stylish-repl))
 
+(add-hook 'stylish-repl-mode-hook
+          (lambda nil
+            (when stylish-repl-restart-requested
+              (setq stylish-repl-restart-requested nil)
+              (insert "\"ok?\"")
+              (stylish-repl-send))))
 
 (defun stylish-repl-history-cleanup nil
   "Remove all elements from the history ring that have a true
