@@ -82,6 +82,9 @@ the Perl REPL)"
   (define-key stylish-repl-prompt-map (kbd "M-p") 'stylish-repl-history-up)
   (define-key stylish-repl-prompt-map (kbd "M-n") 'stylish-repl-history-down)
 
+  (when (boundp 'cperl-mode-syntax-table)
+    (set-syntax-table cperl-mode-syntax-table))
+
   (condition-case e
       (stylish)
     (error 
@@ -174,7 +177,7 @@ the Perl REPL)"
     (stylish-repl-insert "\n")
     (if (not (string-match "^," text)) ; perl or internal command?
         (progn 
-          (run-hooks 'stylish-repl-send-hooks)
+          (run-hooks 'stylish-repl-send-hook)
           (stylish-send-command 'repl text))
       (stylish-repl-process-internal-command text))))
 

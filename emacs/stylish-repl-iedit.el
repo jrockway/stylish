@@ -7,7 +7,7 @@
   "The list of currently-being-edited lines")
 
 (defvar stylish-repl-ie--update-edit-next nil
-  "Rewrite the history the next time the send hooks are run?")
+  "Rewrite the history the next time the send hook is run?")
 
 (defun stylish-repl-ie-commit-line () 
   "Commit the line last entered to the editing block."
@@ -48,7 +48,7 @@ the REPL."
   nil)
 
 (stylish-repl-register-command "edit" 'stylish-repl-ie-replace-last-line)
-(add-hook 'stylish-repl-send-hooks 
+(add-hook 'stylish-repl-send-hook
           (lambda nil
             (when stylish-repl-ie--update-edit-next
               (setq stylish-repl-ie--update-edit-next nil)
