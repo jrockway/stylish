@@ -34,7 +34,9 @@ sub format {
 
 sub parse {
     my ($self, $exp) = @_;
-    return $self->parser->read($exp);
+    my $out = $self->parser->read($exp);
+    map { $_ =~ s/\\\\/\\/g if !ref } @$out;
+    return $out;
 }
 
 1;
