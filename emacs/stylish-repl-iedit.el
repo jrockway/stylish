@@ -42,7 +42,7 @@
   "Yank the last edit line to the prompt, allow editing, and
 replace that line with the edited version when the line is sent to
 the REPL."
-  (insert-stylish-repl-prompt)
+  (stylish-repl-insert-prompt)
   (insert (car (reverse stylish-repl-ie--editing)))
   (setq stylish-repl-ie--update-edit-next t)
   nil)

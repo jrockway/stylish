@@ -98,7 +98,7 @@ the Perl REPL)"
   
   (stylish-repl-message "Welcome to the Stylish REPL!")
   (message "Let the hacking commence!")
-  (insert-stylish-repl-prompt))
+  (stylish-repl-insert-prompt))
 
 (defun stylish-repl-register-command (command function)
   "Add a new command to the repl internal commands dispatch table."
@@ -147,7 +147,7 @@ the Perl REPL)"
       (let ((face (if (eq status :error) 
                       'stylish-repl-error-face 'stylish-repl-result-face)))
         (stylish-repl-insert (concat result "\n") face))
-      (insert-stylish-repl-prompt))
+      (stylish-repl-insert-prompt))
     (goto-char (point-max))))
 
 (defun stylish-repl-input-region-bounds nil
@@ -195,7 +195,7 @@ the Perl REPL)"
         (stylish-repl-insert (format "No command called %s\n" command) 
                              'font-lock-warning-face)
       (setq prompt (funcall handler)))
-    (if prompt (insert-stylish-repl-prompt))))
+    (if prompt (stylish-repl-insert-prompt))))
 
 (defun stylish-repl-send-file (&optional buffer)
   "Send a file to the REPL to load"
@@ -206,7 +206,7 @@ the Perl REPL)"
     (with-current-buffer (get-buffer "*Stylish REPL*")
       (stylish-repl-message (format "\n# Sending %s\n" fn)))))
 
-(defun insert-stylish-repl-prompt nil
+(defun stylish-repl-insert-prompt nil
   "Insert the REPL prompt"
   (stylish-repl-insert "PERL>" font-lock-keyword-face)
   (let ((inhibit-read-only t)) (insert (propertize " " 'read-only nil)))
