@@ -305,4 +305,13 @@ most recent, 50 is the oldest."
 ;;  (with-current-buffer (get-buffer "*Stylish REPL*")
 ;;    (add-hook 'post-command-hook 'stylish-repl-highlight-input)))
 
+(defun stylish-repl-clear nil
+  "Clear the REPL buffer"
+  (interactive)
+  (with-current-buffer (get-buffer "*Stylish REPL*")
+    (let ((inhibit-read-only t))
+      (delete-region (point-min) (point-max))))
+   t)
+(stylish-repl-register-command "clear" 'stylish-repl-clear)
+
 (provide 'stylish-repl)
