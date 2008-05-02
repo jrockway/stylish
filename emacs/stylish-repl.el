@@ -179,11 +179,11 @@ the Perl REPL)"
     (unless nosave (stylish-repl-history-add text))
     (end-of-line)
     (stylish-repl-insert "\n")
-    (if (not (string-match "^," text)) ; perl or internal command?
-        (progn 
-          (run-hooks 'stylish-repl-send-hook)
-          (stylish-send-command 'repl text))
-      (stylish-repl-process-internal-command text))))
+    (if (string-match "^," text) ; perl or internal command?
+        (stylish-repl-process-internal-command text)
+      (run-hooks 'stylish-repl-send-hook)
+      (stylish-send-command 'repl text))))
+
 
 (defun stylish-repl-process-internal-command (command)
   "Run the internal command COMMAND."
