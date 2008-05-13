@@ -263,8 +263,19 @@ most recent, 50 is the oldest."
   (or id (setq id stylish-repl-history-id))
   (car (ring-ref stylish-repl-history id)))
 
+(defun stylish-repl--replace-region nil
+  "Replace the region from START to END with H"
+  (goto-char start)
+  (delete-region start end)
+  (insert h)
+  (goto-char (point-max)))
+
+(add-hook 'stylish-repl-history-pre-hook
+          (lambda nil (goto-char (point-max))))
+
 (defun stylish-repl-history-up nil
   (interactive)
+  (run-hooks 'stylish-repl-history-pre-hook)
   ;; first time we go up, save the half-entred line
   (when (eq stylish-repl-history-id -1)
     (let ((current (stylish-repl-input-region-text)))
@@ -275,24 +286,21 @@ most recent, 50 is the oldest."
   (let* ((bounds (stylish-repl-input-region-bounds))
          (start (car bounds)) (end (cdr bounds))
          (h (stylish-repl-history-get)))
-    (if (not h) (error "No more history!")
-      (goto-char start)
-      (delete-region start end)
-      (insert h)
-      (goto-char (point-max)))))
+    (if (not h) 
+        (error "No more history!")
+      (stylish-repl--replace-region))))
 
 (defun stylish-repl-history-down nil
   (interactive)
+  (run-hooks 'stylish-repl-history-pre-hook)
   (when (< stylish-repl-history-id 1)
     (error "Can't look into the future!"))
   (decf stylish-repl-history-id)
   (let* ((bounds (stylish-repl-input-region-bounds))
          (start (car bounds)) (end (cdr bounds))
          (h (stylish-repl-history-get)))
-    (goto-char start)
-    (delete-region start end)
-    (insert h)
-    (goto-char (point-max))))
+    (stylish-repl--replace-region)))
+
 ;;
 ;;(defun stylish-repl-highlight-input ()
 ;;  (interactive)
@@ -311,7 +319,7 @@ most recent, 50 is the oldest."
   (with-current-buffer (get-buffer "*Stylish REPL*")
     (let ((inhibit-read-only t))
       (delete-region (point-min) (point-max))))
-   t)
+  t)
 (stylish-repl-register-command "clear" 'stylish-repl-clear)
 
 (provide 'stylish-repl)
