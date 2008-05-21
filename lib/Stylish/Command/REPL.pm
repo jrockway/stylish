@@ -2,6 +2,7 @@ package Stylish::Command::REPL;
 use Moose::Role;
 
 use Stylish::REPL;
+use File::Slurp qw(read_file);
 use IO::CaptureOutput qw(capture);
 
 # TODO: per-client?
@@ -50,9 +51,10 @@ sub command_repl {
 
 sub command_repl_load_file {
     my ($self, $client, $file) = @_;
-    $file =~ s/[\\]/\\/g;
-    $file =~ s/[']/\'/g;
-    return $self->command_repl($client, "do '$file' || die $@");
-}
 
+    # read the file in manually so we can add a "1;" at the end
+    my $file_name = quotemeta $file;
+    my $text = eval { read_file $file } || qq{die "Could not read $file_name"};
+    return $self->command_repl($client, qq{$text ;"Loaded $file_name OK";});
+}
 1;

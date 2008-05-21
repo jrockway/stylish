@@ -5,6 +5,7 @@ all_from 'lib/Stylish.pm';
 
 requires 'Data::SExpression';
 requires 'Devel::REPL';
+requires 'File::Slurp';
 requires 'IO::CaptureOutput';
 requires 'Moose';
 requires 'Moose::Util::TypeConstraints';
