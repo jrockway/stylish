@@ -1,6 +1,6 @@
 package Stylish::REPL;
 use Moose;
-
+use 5.010;
 # Stylish::REPL is Devel::REPL without a terminal
 
 with qw/Devel::REPL::Plugin::LexEnv
@@ -20,7 +20,9 @@ has error => (
 
 sub wrap_as_sub {
   my ($self, $line) = @_;
-  return qq!sub {\n!.$self->mangle_line($line).qq!\n}\n!;
+  # the "use $]" is so that when running under 5.10, all the new 5.10
+  # features become available
+  return qq!use $]; sub {\n!.$self->mangle_line($line).qq!\n}\n!;
 }
 
 sub eval {

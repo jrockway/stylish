@@ -20,11 +20,13 @@ sub command_repl {
     # handlers for output/error
     my $status;
     my $result;
-    my $get_output = sub { 
+    my $get_output = sub {
+        no warnings;
         $result = join '', @_;
         $status = 'success';
     };
     my $get_error = sub {
+        no warnings;
         $result = join ': ', @_; # XXX
         $status = 'error';
     };
