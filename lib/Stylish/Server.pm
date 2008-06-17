@@ -12,6 +12,7 @@ with qw/MooseX::LogDispatch::Levels
         Stylish::Command::Id
         Stylish::Command::Syntax
         Stylish::Command::REPL
+        Stylish::Command::Docstring
        /;
 
 has 'formatter' => (
