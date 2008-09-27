@@ -205,6 +205,18 @@ the Perl REPL)"
     (with-current-buffer (get-buffer "*Stylish REPL*")
       (stylish-repl-message (format "\n# Sending %s\n" fn)))))
 
+(defun stylish-repl-switch-to-repl ()
+  "Switch to stylish buffer"
+  (interactive)
+  (switch-to-buffer "*Stylish REPL*")
+  (end-of-buffer))
+
+(defun stylish-repl-switch-to-repl-other-window ()
+  "Switch to stylish buffer (in other window)"
+  (interactive)
+  (switch-to-buffer-other-window "*Stylish REPL*")
+  (end-of-buffer))
+
 (defun stylish-repl-send-region-to-stylish (start end)
   "Send region to stylish buffer"
   (interactive "r")
