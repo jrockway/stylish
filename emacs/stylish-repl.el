@@ -205,6 +205,16 @@ the Perl REPL)"
     (with-current-buffer (get-buffer "*Stylish REPL*")
       (stylish-repl-message (format "\n# Sending %s\n" fn)))))
 
+(defun stylish-repl-send-region-to-stylish (start end)
+  "Send region to stylish buffer"
+  (interactive "r")
+
+  (setq string (concat " " (buffer-substring-no-properties start end)))
+  (setq string
+        (replace-regexp-in-string "\n" " " string nil '\\))
+  (with-current-buffer (get-buffer "*Stylish REPL*")
+     (stylish-send-command 'repl string)))
+
 (defun stylish-repl-insert-prompt nil
   "Insert the REPL prompt"
   (stylish-repl-insert "PERL>" font-lock-keyword-face)
