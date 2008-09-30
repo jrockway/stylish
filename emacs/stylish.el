@@ -6,6 +6,14 @@
 (defvar stylish-port 36227
   "The port that the Stylish server is running on")
 
+(defvar stylish-directory
+  "/home/jon/projects/cpan_modules/Stylish"
+  "Directory containing the Stylish server bin/ and lib/ directories.")
+
+(defvar stylish-command-line 
+  "perl -Ilib bin/stylish.pl"
+  "How to exec the Stylish server if it's not already running.")
+
 (defvar stylish-process "stylish"
   "The name of the Stylish process")
 
@@ -40,6 +48,17 @@ after the connection is setup, if necessary).")
   "Returns true if we are connected to a Stylish process"
   (if (not (ignore-errors (get-process stylish-process))) nil t))
 
+(defvar stylish--start-server-interlock nil)
+
+(defun stylish-try-to-start-server nil
+  (when stylish--start-server-interlock
+    (error "Trying to start server from started server's connection"))
+  (let ((stylish--start-server-interlock t))
+    (start-process "stylish-server" " *stylish-server*"
+                   "perl" "-I/home/jon/projects/Stylish/lib"
+                   "/home/jon/projects/Stylish/bin/stylish.pl")
+    (stylish-connect)))
+  
 (defun stylish-connect ()
   "Connect to a stylish Stylish server"
   (interactive)
@@ -52,7 +71,8 @@ after the connection is setup, if necessary).")
         (set-process-filter p 'stylish-filter)
         p)
     (error (setq stylish-server-info-alist nil)
-           (error "Failed to connect to the Stylish server!"))))
+           (stylish-try-to-start-server))))
+           
 
 (defun stylish nil
   "Connect to the Stylish server, unless already connected.  You
