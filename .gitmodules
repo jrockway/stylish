@@ -1,0 +1,9 @@
+[submodule "el"]
+	path = el
+	url = https://github.com/jrockway/stylish-elisp.git
+[submodule "perl"]
+	path = perl
+	url = https://github.com/jrockway/stylish-perl.git
+[submodule "mozrepl"]
+	path = mozrepl
+	url = https://github.com/jrockway/mozrepl.git
