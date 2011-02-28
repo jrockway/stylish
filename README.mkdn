@@ -1,0 +1,8 @@
+This is the Stylish project as a whole, linking to the individual
+language bindings and the editor integration.
+
+A historical note:
+
+Stylish used to be Perl-only and Emacs-only, but now it has branched
+out.  The Emacs stuff is at https://github.com/jrockway/stylish-elisp
+and the Perl stuff is at https://github.com/jrockway/stylish-perl.
